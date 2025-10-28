@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------------------------Enums-----------------------------------------------------------------
+enum UserStatus {
+  ACTIVE
+  PENDING
+  DISABLED
+  SUSPENDED
+  DELETED
+}
+
+enum OrganisationStatus {
+  ACTIVE
+}
+
+
+
+// --------------------------------------------------------User Model------------------------------------------------------------
+
+model User {
+  id                   Int            @id @default(autoincrement())
+  email                String         @unique
+  password             String
+  firstName            String
+  lastName             String?
+  profileColor         String?        @default("#2EB6C9")
+  status               UserStatus     @default(ACTIVE)
+  image                String?
+  refreshToken         String?
+  isDeleted            Boolean        @default(false)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  deletedAt            DateTime?
+  createdOrganisations Organisation[] @relation("CreatedByRelation")
+  deletedOrganisations Organisation[] @relation("DeletedByRelation")
+}
+
+// --------------------------------------------------------Organisation Model----------------------------------------------------
+
+model Organisation {
+  id          Int                  @id @default(autoincrement())
+  name        String
+  status      OrganisationStatus   @default(ACTIVE)
+  isDeleted   Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int
+  deletedBy   Int?
+  branding    Branding?
+  createdById User                 @relation("CreatedByRelation", fields: [createdBy], references: [id])
+  deletedById User?                @relation("DeletedByRelation", fields: [deletedBy], references: [id])
+  contact     OrganisationContact?
+}
+
+// --------------------------------------------------------Organisation Branding-------------------------------------------------
+model Branding {
+  id             Int          @id @default(autoincrement())
+  logo           String?
+  coverImage     String?
+  primaryColor   String?
+  secondaryColor String?
+  fontFamily     String?
+  tagline        String?
+  them           Json?
+  organisation   Int          @unique
+  organisationId Organisation @relation(fields: [organisation], references: [id])
+}
+
+//---------------------------------------------------------Organisation Conact---------------------------------------------------
+model OrganisationContact {
+  id             Int          @id @default(autoincrement())
+  email          String?
+  phone          String?
+  website        String?
+  address        String?
+  city           String?
+  country        String?
+  timezone       String?
+  facebookUrl    String?
+  instagramUrl   String?
+  linkedinUrl    String?
+  twitterUrl     String?
+  youtubeUrl     String?
+  organisation   Int          @unique
+  organisationId Organisation @relation(fields: [organisation], references: [id])
+}
+
